@@ -58,5 +58,20 @@ Building a CI/CD pipeline isn't just a technical upgrade—it’s a business ena
 -  Increase customer satisfaction & revenue.
 
 
-# LAB
+# CICD Pipeline:
+### CI
+1. Trigger (e.g. git push) (dev branch).
+2. Test 
+3. Merge (into the main branch).
+### CD
+1. Deploy (depends on the architecture)- vm, container etc.
+2. Trigger- git push- needs a webhook to be set up. Jenkins needs to listen for a notification for a change made to the code on github.
 
+**Webhook** = something that needs to inform something else something that happens. 
+- One service sends notif, one service is listening for the notif.
+
+## Why build a pipeline:
+- Making devs life easier.
+- Quickly get changes to end users.
+- Reduce risk of big code changes messing things up. 
+- Business value - Save time, save money, users are actually using the latest code/features quickly.
