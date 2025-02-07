@@ -233,6 +233,7 @@ Each repo needs a different key.
   - In job config - change branch specifier to `*/dev` from main.
 - In local git bash terminal - repo 
 - `git checkout -b dev`
+- Could also do 2 commands separate (`git branch dev` + `git checkout dev`) or `git switch dev`.
 - In git bash:
   - `nano README.md`
   - Make a change to it and save.
@@ -242,7 +243,7 @@ Each repo needs a different key.
   - `git push origin dev`
 - Should see the job run on jenkins automatically and be successful.
 
-### Merging changes from dev to main if job is successful: Job 2:
+## JOB 2 - Merging changes from dev to main if job is successful:
 
 - Create a new item:
   - Name: `zainab-job2-ci-merge`
@@ -254,16 +255,137 @@ Each repo needs a different key.
       - add git url and credentials
       - ssh link.
       - `git@github.com:zainabx78/tech501-sparta-app-cicd/`
-    - Branch = main.
+    - Branch = dev
   - In build environment: enable ssh agent and specify credentials. 
+    - because our repo was public, read only access i.e. cloning for job1 does not require ssh access. But job2 requires write access so needs ssh authentication.
   - Add a build step - execute shell script
-```
-git checkout main
-git pull origin main
-git merge --ff-only origin/dev
-git push origin main
+```bash
+git checkout main # switches to the main branch
+git pull origin main # Fetches the latest changes from the remote main branch and merges them into your local main branch.
+git merge origin/dev # Merge changes from origin/dev into main.
+git push origin main # Pushes the updated main branch to the remote repository.
 
 ```
-Blockers:
+- If you want to merge dev into main, you have to be in main and then do git merge dev
+
+### 2nd way to merge: the better way (no job 2 required).
+
+- Can use a jenkins plugin. 
+- Plugin called git publisher.
+- Before using this plugin, change config (if used previous method for job 2 using the shell script):
+  - In job 2 configuration:
+    - Remove the build step.
+    - add a post build action : git publisher.
+    - Check `push only if build succeeds` box.
+    - Check `force push` box.
+    - Add branch: 
+      - branch to push = main
+      - Target remote branch = origin
+      - Save.
+![alt text](<Images/Screenshot 2025-02-07 121934.png>)
+
+  - Branch specifier = dev
+  - Also check the `ssh agent` box in `build environment`
+
+![alt text](<Images/Screenshot 2025-02-07 122024.png>)
+
+  - Save
+- Then in local bash terminal, make changes to your README.md file in the dev environment in repo.
+  - Push the changes to remote repo on github.
+  
+  ![alt text](<Images/Screenshot 2025-02-07 120045.png>)
+  ![alt text](<Images/Screenshot 2025-02-07 120105.png>)
+
+
+- Should see job 1 and 2 run and the changes should also be pushed to the github main branch from the dev branch (check on github both branches).
+  
+![alt text](<Images/Screenshot 2025-02-07 120547.png>)
+
+
+
+
+## JOB 3 - Deploying code on EC2 instance
+
+
+- ssh into ec2 previously created in 2-tier app:
+  - `ssh -i /c/Users/zaina/Downloads/zainab-ssh-key.pem ubuntu@54.216.167.202`
+
+### Create Item:
+- Name Job 3: zainab-job3-cd-deploy 
+- Configure the git repo links. 
+- Add ssh agent- with credentials
+- Add job- add a execute shell job:
+- The app folder location in jenkins: 
+  - `/var/jenkins/workspace/zainab-job2-ci-merge/app`
+- Also add a trigger so it watches job 2 before running.
+
+- scp command to copy code from jenkins to the ec2 instance:
+`scp -o StrictHostKeyChecking=no -r /var/jenkins/workspace/zainab-job2-ci-merge/app ubuntu@ec2-54-216-167-202.eu-west-1.compute.amazonaws.com:/home/ubuntu`
+- Ssh into ec2 through jenkins:
+  - `ssh ubuntu@ec2-54-216-167-202.eu-west-1.compute.amazonaws.com`
+
+
+![alt text](<Images/Screenshot 2025-02-07 161820.png>)
+
+Output with just the first 2 commands (scp and ssh)- can see successful ssh into the ec2.
+
+![alt text](<Images/Screenshot 2025-02-07 161244.png>)
+
+
+
+Turn this into a script for the jenkins job shell script:
+```
+scp -o StrictHostKeyChecking=no -r /var/jenkins/workspace/zainab-job2-ci-merge/app ubuntu@ec2-54-216-167-202.eu-west-1.compute.amazonaws.com:/home/ubuntu
+
+ssh ubuntu@ec2-54-216-167-202.eu-west-1.compute.amazonaws.com
+
+```
+Next, update script to run app through jenkins:
+
+```bash
+#This copies files from jenkins server to the ec2
+scp -o StrictHostKeyChecking=no -r /var/jenkins/workspace/zainab-job2-ci-merge/app ubuntu@ec2-54-216-167-202.eu-west-1.compute.amazonaws.com:/home/ubuntu/repo
+#ssh into the ec2 server through jenkins. 
+ssh ubuntu@ec2-54-216-167-202.eu-west-1.compute.amazonaws.com << 'EOF'
+	cd /home/ubuntu/repo/app
+	ls
+    sudo systemctl restart nginx
+    npm install
+    npm install pm2 -g
+    pm2 stop app.js
+	pm2 start app.js
+EOF
+
+```
+![alt text](<Images/Screenshot 2025-02-07 165723.png>)
+![alt text](<Images/Screenshot 2025-02-07 165729.png>)
+![alt text](<Images/Screenshot 2025-02-07 165735.png>)
+![alt text](<Images/Screenshot 2025-02-07 165741.png>)
+
+
+
+
+### Making a change to the front page of the file
+- Make sure in dev branch (LOCAL GIT REPO IN YOUR MACHINE!).
+- Go to app ---> views folder ---> nano into index file ---> add whatever text you want after the h2 line.
+
+![alt text](<Images/Screenshot 2025-02-07 170455.png>)
+
+
+- `git add .`
+- `git commit -m "test"`
+- `Git push origin dev`
+
+After the push it should automatically trigger the job 1 to run then job 2 and job 3. The changes will display on the app publicIP url (tried 2 times).
+
+### **Success output in job 3-**
+
+![alt text](<Images/Screenshot 2025-02-07 164844.png>)
+
+### **Success shown on the app website:**
+
+![alt text](<Images/Screenshot 2025-02-07 165651.png>)
+![alt text](<Images/Screenshot 2025-02-07 170335.png>)
+## Blockers:
 - Didn't enable SSH agent on the job.
 ![alt text](<Images/Screenshot 2025-02-06 163731.png>)
