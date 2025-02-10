@@ -10,6 +10,7 @@ Enter IP with port for jenkins server already created.
 - Username: devopslondon
 - Password: **Confidential**
 
+
 ## First project in Jenkins:
 - Creating a project = same as creating a pipeline.
 - Create a new item (new pipeline):
@@ -61,6 +62,9 @@ You can link jobs together (the pipelines you created) and they can run one afte
 ![alt text](<Images/Screenshot 2025-02-05 115607.png>)
 
 # Jenkins - CICD pipeline for Sparta Test App
+
+Make sure your ec2 instance with your app is running.
+ - If restarting ec2 to re-attempt lab, use `npm install` and `pm2 start` in the app folder.
 
 - Developer working.
 - Trigger - developer pushes the code to the remote repo (github) (dev may need to pull changes from main repo first to get indentical environments for testing purposes).
@@ -268,7 +272,7 @@ git push origin main # Pushes the updated main branch to the remote repository.
 ```
 - If you want to merge dev into main, you have to be in main and then do git merge dev
 
-### 2nd way to merge: the better way (no job 2 required).
+### 2nd way to merge: the better way:
 
 - Can use a jenkins plugin. 
 - Plugin called git publisher.
@@ -282,6 +286,7 @@ git push origin main # Pushes the updated main branch to the remote repository.
       - branch to push = main
       - Target remote branch = origin
       - Save.
+      - Also check the merge box. 
 ![alt text](<Images/Screenshot 2025-02-07 121934.png>)
 
   - Branch specifier = dev
@@ -316,11 +321,17 @@ git push origin main # Pushes the updated main branch to the remote repository.
 - Add ssh agent- with credentials
 - Add job- add a execute shell job:
 - The app folder location in jenkins: 
+  - In job2 shell script add `pwd` and run the job to check where my app folder is on jenkins.
   - `/var/jenkins/workspace/zainab-job2-ci-merge/app`
 - Also add a trigger so it watches job 2 before running.
 
 - scp command to copy code from jenkins to the ec2 instance:
 `scp -o StrictHostKeyChecking=no -r /var/jenkins/workspace/zainab-job2-ci-merge/app ubuntu@ec2-54-216-167-202.eu-west-1.compute.amazonaws.com:/home/ubuntu`
+  - Possibility that files are locked and scp won't copy files to the folder.
+    - May need to stop app running first (not good for production).
+    - Best way is to update code and re-run it (no interruption to the users):
+    - E.g. canary deployment - 10% of user traffic redirected to a different server for testing purposes and start slowly shifting the traffic.
+    - E.g. Blue-green deployment - replica of servers to be tested on - switching between the 2. E.g. only make the switch from traffic going to blue to green when the green servers work properly with the changes. Problem with green, switch back to blue. 
 - Ssh into ec2 through jenkins:
   - `ssh ubuntu@ec2-54-216-167-202.eu-west-1.compute.amazonaws.com`
 
@@ -342,23 +353,27 @@ ssh ubuntu@ec2-54-216-167-202.eu-west-1.compute.amazonaws.com
 ```
 Next, update script to run app through jenkins:
 
-```bash
-#This copies files from jenkins server to the ec2
+```
+#This copies files from jenkins server to the ec2 - If you run scp again with an updated file, it will replace the existing file with the new one.
+
 scp -o StrictHostKeyChecking=no -r /var/jenkins/workspace/zainab-job2-ci-merge/app ubuntu@ec2-54-216-167-202.eu-west-1.compute.amazonaws.com:/home/ubuntu/repo
+
 #ssh into the ec2 server through jenkins. 
+
 ssh ubuntu@ec2-54-216-167-202.eu-west-1.compute.amazonaws.com << 'EOF'
 	cd /home/ubuntu/repo/app
-	ls
-    sudo systemctl restart nginx
-    npm install
-    npm install pm2 -g
-    pm2 stop app.js
-	pm2 start app.js
+  sudo systemctl restart nginx
+  npm install
+  pm2 stop app.js
+  pm2 start app.js
 EOF
 
 ```
+
 ![alt text](<Images/Screenshot 2025-02-07 165723.png>)
-![alt text](<Images/Screenshot 2025-02-07 165729.png>)
+
+![alt text](<Images/Screenshot 2025-02-10 141032.png>)
+
 ![alt text](<Images/Screenshot 2025-02-07 165735.png>)
 ![alt text](<Images/Screenshot 2025-02-07 165741.png>)
 
@@ -380,12 +395,41 @@ After the push it should automatically trigger the job 1 to run then job 2 and j
 
 ### **Success output in job 3-**
 
-![alt text](<Images/Screenshot 2025-02-07 164844.png>)
+![alt text](<Images/Screenshot 2025-02-10 145621.png>)
 
 ### **Success shown on the app website:**
 
 ![alt text](<Images/Screenshot 2025-02-07 165651.png>)
 ![alt text](<Images/Screenshot 2025-02-07 170335.png>)
+
+Remember!! EC2 public Ip changes everytime the instance is restarted.
+
+## Connecting the database with the app in pipeline
+ - Add export command into the bash script of job 3:
+
+```
+scp -o StrictHostKeyChecking=no -r /var/jenkins/workspace/zainab-job2-ci-merge/app ec2-54-216-133-229.eu-west-1.compute.amazonaws.com:/home/ubuntu/repo
+
+ssh ec2-54-216-133-229.eu-west-1.compute.amazonaws.com << 'EOF'
+	cd /home/ubuntu/repo/app
+    sudo systemctl restart nginx
+    export DB_HOST=mongodb://172.31.52.149:27017/posts
+    npm install
+    pm2 kill
+    pm2 start app.js
+EOF 
+
+```
+
+Make sure you change db priv Ip after restarting.
+
+![alt text](<Images/Screenshot 2025-02-10 122730.png>)
+
+![alt text](<Images/Screenshot 2025-02-10 133243.png>)
+
 ## Blockers:
-- Didn't enable SSH agent on the job.
+
+Didn't enable SSH agent on the job.
+
 ![alt text](<Images/Screenshot 2025-02-06 163731.png>)
+
