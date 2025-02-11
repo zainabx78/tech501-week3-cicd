@@ -49,6 +49,8 @@ Alternatives to jenkins=
 - GitLab CI/CD
 - CircleCI
 - Travis CI
+- Azure DevOps (more private by default)
+- Bamboo 
 
 ## Business value:
 Building a CI/CD pipeline isn't just a technical upgrade—it’s a business enabler. It helps organizations:

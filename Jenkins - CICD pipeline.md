@@ -433,3 +433,29 @@ Didn't enable SSH agent on the job.
 
 ![alt text](<Images/Screenshot 2025-02-06 163731.png>)
 
+## Best practices
+
+### If a job fails:
+- Check console output
+- Notifications about failure of the job set up.
+
+### Creating jobs:
+- Use multiple jobs and connect them for a single pipeline (not a single job).
+- Use jenkins plugins.
+- Make sure manual attempts work first.
+
+## Key info:
+
+Single node - jobs run on one node. (built-in node). - simplest set up. 
+
+If use multi-node set up - master node needs permissions to run ec2 instances as worker nodes and also remove and delete them.
+
+Advantages of CI: Detect issues early
+Built-in security and monitoring at the beginning. 
+
+Required dependencies for jenkins server:
+- Install java (jdk).
+- Accessible on port 8080.
+- Plugins that the CICD pipeline requires.
+
+**Biggest value to the business** = end users being able to use those changes - code sitting around brings no value, has to actually be used on the website/application.
