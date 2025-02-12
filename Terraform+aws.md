@@ -123,11 +123,12 @@ Also save them in .ssh folder
    - Uses HCL language.
 - Don't push state files to public github repo - sensitive info.
 - Lock file created when `terraform init` 
+  - This command creates the setup/dependencies needed for terraform in that folder.
   - Open bash terminal in vscode.
   - Can share when collaborating.
   - Uses same version of plugins/providers.
 
-Script to create an ec2 instance
+**Script to create an ec2 instance**
 
 ```
 # Create an ec2 instance  
@@ -286,3 +287,153 @@ resource "aws_key_pair" "zainab-key-tf" {
 
 ![alt text](<Images/Screenshot 2025-02-11 164417.png>)
 
+## Variables
+
+- Don't repeat yourself in the terraform code - variables are good.
+- Easier to change values when they're set in variables.
+- Easy to put into the variables in .gitignore file so the values don't get pushed onto a github repo.
+- Abstraction - abstracts some complexity from the code - easier to read and use and understand.
+
+1. Create a file called variable.tf.
+- Add the AMI ID into the file as a variable and then input that variable into the main.tf file.
+
+![alt text](<Images/Screenshot 2025-02-12 105911.png>)
+
+In the main.tf file:
+
+![alt text](<Images/Screenshot 2025-02-12 105944.png>)
+
+- Add the variable.tf file to the .gitignore file so it doesn't get pushed to any git repo. 
+- Set the rest of the hardcoded values as variables too.
+
+- Id's aren't allowed in variables.
+  
+![alt text](<Images/Screenshot 2025-02-12 111617.png>)
+
+### Variables in main.tf:
+
+```
+# Create an ec2 instance  
+
+# where to create it - provide cloud name
+provider "aws" {
+
+  # which region to use
+  region = var.region
+}
+
+# which services/resources
+resource "aws_instance" "app_instance" {
+
+    # what AMI ID
+  ami = var.ami_id
+
+  # which type of instance
+  instance_type = var.instance_type
+
+  # public Ip
+  associate_public_ip_address = true
+
+  # security group
+  vpc_security_group_ids = [aws_security_group.tech501-zainab-tf-allow-port-22-3000-80.id]
+  
+  # key pair
+  key_name = aws_key_pair.zainab-key-tf.id
+
+  # name the isntance
+  tags = {
+    Name = var.instance_name
+  }
+
+}
+
+# Creating the security group
+
+resource "aws_security_group" "tech501-zainab-tf-allow-port-22-3000-80" {
+    name        = var.security_group_name
+    description = "security group"
+
+    tags = {
+        Name = var.security_group_name
+    }
+}
+
+resource "aws_vpc_security_group_ingress_rule" "allow-ssh" {
+  security_group_id = aws_security_group.tech501-zainab-tf-allow-port-22-3000-80.id
+  from_port         = 22
+  ip_protocol       = "tcp"
+  to_port           = 22
+  cidr_ipv4  = var.my-ip
+}
+
+resource "aws_vpc_security_group_ingress_rule" "allow-http" {
+  security_group_id = aws_security_group.tech501-zainab-tf-allow-port-22-3000-80.id
+  from_port         = 80
+  ip_protocol       = "tcp"
+  to_port           = 80
+  cidr_ipv4 =  var.open-access-ip
+
+
+}
+
+resource "aws_vpc_security_group_ingress_rule" "allow-3000" {
+  security_group_id = aws_security_group.tech501-zainab-tf-allow-port-22-3000-80.id
+  from_port         = 3000
+  ip_protocol       = "tcp"
+  to_port           = 3000
+  cidr_ipv4 =   var.open-access-ip
+
+}
+
+# Creating a key pair for ec2
+resource "aws_key_pair" "zainab-key-tf" {
+  key_name   = var.key_name
+  public_key = file(var.key_file)  # Replace with your actual public key path
+}
+
+```
+
+### Variables set in the variable.tf file:
+
+```
+# Create a variable for the ami-id
+
+variable "ami_id" {
+  default = "ami-0c1c30571d2dae5c9"
+
+}
+
+variable "region" {
+  default = "eu-west-1"
+}
+
+variable "instance_type" {
+  default = "t3.micro"
+}
+
+variable "instance_name" {
+  default = "tech501-zainab-terraform-app"
+}
+
+variable "key_name" {
+  default = "zainab-tf-my-existing-keypair"
+}
+
+variable "key_file" {
+  default = "~/.ssh/zainab-test-ssh-2.pub"
+}
+
+variable "open-access-ip" {
+  default = "0.0.0.0/0"
+}
+
+variable "my-ip" {
+  default = "88.97.161.118/32"
+}
+
+variable "security_group_name" {
+  default = "tech501-zainab-tf-allow-port-22-3000-80"
+}
+
+```
+Push the repo to new github repo called terraform
