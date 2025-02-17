@@ -305,3 +305,9 @@ resource "azurerm_virtual_machine" "my-app-vm" {
 ![alt text](<Images/Screenshot 2025-02-13 120941.png>)
 
 ![alt text](<Images/Screenshot 2025-02-13 120751.png>)
+
+## State files:
+- Need to put them in remote backends to be able to collaborate with other people. 
+- AWS - S3+dynamodb (s3 doesnt have file locking by default so have to use dynamodb = more expensive).
+- Azure blob storage as a backend - more cheaper and easier as has built in file locking
+- file locking - only one person can work on the code at a time.
