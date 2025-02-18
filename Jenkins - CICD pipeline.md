@@ -4,82 +4,6 @@
 - Powerful plugins.
 - Great to understand CICD.
 
-# Setting up a jenkins server with AWS
-
-## Create a key pair and move it to .ssh directory on local pc. 
-
-1. On AWS console, go to key pairs. Create a .pem key pair (private key will be downloaded).
-2. Move the private key to the .ssh folder:
-   - `mv /c/Users/zaina/Downloads/aws-key-zainab.pem /c/Users/zaina/.ssh`
-3. Create your ec2 instance and attach the public key you created on AWS to the ec2. 
-
-
-## Creating the Jenkins servers
-
-1. Create EC2 instance:
-   - Ubuntu 22.04 LTS
-   - Key pair that you previously created.
-   - t3 micro. 
-
-2. SSH into the EC2 instance you created
-   - ` ssh -i /c/Users/zaina/.ssh/aws-key-zainab.pem ubuntu@18.200.197.9`
-
-3. Configure the jenkins server on the EC2
-- Run these commands:
-
-```
-# Update
-sudo apt update
-
-# Install java (pre-requisite for jenkins)
-sudo apt install openjdk-17-jre
-
-# Check if it's installed properly
-java --version
- 
-# Install the dependencies for jenkins 
-curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key | sudo tee \
-  /usr/share/keyrings/jenkins-keyring.asc > /dev/null
-echo deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] \
-  https://pkg.jenkins.io/debian-stable binary/ | sudo tee \
-  /etc/apt/sources.list.d/jenkins.list > /dev/null
-
-# Update (with new jenkins dependencies)
-sudo apt-get update
-
-# Install jenkins
-sudo apt-get install jenkins
-
-# Permenantly start jenkins service
-sudo systemctl start jenkins.service
-
-# Check status of jenkins (should be running)
-sudo systemctl status jenkins
-
-```
-![alt text](<Images/Screenshot 2025-02-17 142618.png>)
-
-- Jenkins runs on port 8080 so open that port in the inbound rules of security group of ec2. 
-
-![alt text](<Images/Screenshot 2025-02-17 143016.png>)
-
-- Use grep to see if jenkins is running on port 8080.
-
-![alt text](<Images/Screenshot 2025-02-17 142556.png>)
-
-4. Access the jenkins server through public Ip of EC2 and port 8080 at the end: 
-   - `http://18.200.197.9:8080/`
-
-5. To get the password, use cat and the file path given on the jenkins screen:
-![alt text](<Images/Screenshot 2025-02-17 142607.png>)
-
-   - Paste the contents into the jenkins server to access it.
-
-- Install suggested plugins.
-- Skip and use as admin. 
-
-
-
 # LAB:
 Enter IP with port for jenkins server already created.
 - `http://52.31.15.176:8080/`
@@ -186,7 +110,7 @@ Make sure your ec2 instance with your app is running.
 - In local pc, create a new repo:
   - `cd ~/Documents/github`
   - `mkdir tech501-sparta-app-cicd`
-- Add the code from previous app repo on gitub to this new repo.
+- Add the code from previous app repo on github to this new repo.
   - `cd tech501-sparta-app-cicd`
   - ` git clone https://github.com/zainabx78/tech501-sparta-app repo`
   - Unzip the code `unzip nodejs20-sparta-test-app.zip `
@@ -279,6 +203,7 @@ Each repo needs a different key.
   - If job hangs, just abort it and retry.
 
 ![alt text](<Images/Screenshot 2025-02-06 144919.png>)
+
 ## Setting up webhook (specify dev branch).
 
 - In already made job - configuration
