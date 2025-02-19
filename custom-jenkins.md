@@ -242,10 +242,11 @@ Dashboard:
 - Name Job 3: zainab-job3-cd-deploy 
 - Configure the git repo links. 
 - Add ssh agent- with credentials
+  - New credentials for giving jenkins access to the ec2 instance. Paste in contents of private key. 
 - Add job- add a execute shell job:
 - The app folder location in jenkins: 
   - In job2 shell script add `pwd` and run the job to check where my app folder is on jenkins.
-  - `/var/jenkins/workspace/zainab-job2-ci-merge/app`
+  - `/var/libs/jenkins/workspace/zainab-job-2/app`
 - Also add a trigger so it watches job 2 before running.
 
 - scp command to copy code from jenkins to the ec2 instance:
@@ -269,7 +270,7 @@ Output with just the first 2 commands (scp and ssh)- can see successful ssh into
 
 Turn this into a script for the jenkins job shell script:
 ```
-scp -o StrictHostKeyChecking=no -r /var/jenkins/workspace/zainab-job2-ci-merge/app ubuntu@ec2-54-216-167-202.eu-west-1.compute.amazonaws.com:/home/ubuntu
+scp -o StrictHostKeyChecking=no -r /var/libs/jenkins/workspace/zainab-job-2/app ubuntu@ec2-54-216-167-202.eu-west-1.compute.amazonaws.com:/home/ubuntu
 
 ssh ubuntu@ec2-54-216-167-202.eu-west-1.compute.amazonaws.com
 
@@ -280,15 +281,22 @@ Next, update script to run app through jenkins:
 #This copies files from jenkins server to the ec2 - If you run scp again with an updated file, it will replace the existing file with the new one.
 
 
-scp -o StrictHostKeyChecking=no -r /var/jenkins/workspace/zainab-job-2/app ec2-34-245-236-120.eu-west-1.compute.amazonaws.com:/home/ubuntu/app
+scp -o StrictHostKeyChecking=no -r /var/lib/jenkins/workspace/zainab-job-2/app ubuntu@ec2-34-243-85-170.eu-west-1.compute.amazonaws.com:/home/ubuntu/repo
 
-ssh ubuntu@ec2-34-245-236-120.eu-west-1.compute.amazonaws.com << 'EOF'
-cd /home/ubuntu/app
+ssh ubuntu@ec2-34-243-85-170.eu-west-1.compute.amazonaws.com << 'EOF'
+cd /home/ubuntu/repo/app
 sudo systemctl restart nginx
 export DB_HOST=mongodb://172.31.52.149:27017/posts
 npm install
 pm2 kill
 pm2 start app.js
-EOF 
+EOF
 
 ```
+- Double check the path - use pwd command in previous jobs to check file path for jenkins. 
+- If you restart vm, make sure to change IP in script and webhook.
+- Might need to change strict host checking to no in the settings of jenkins if ssh doesnt work.  
+
+![alt text](<Images/Screenshot 2025-02-19 101436.png>)
+
+![alt text](<Images/Screenshot 2025-02-19 101449.png>)

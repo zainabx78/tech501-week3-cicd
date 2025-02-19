@@ -3,6 +3,7 @@
 2. [AWS-2-Tier-App](AWS-2-tier-app.md)
 3. [SSH for github](Using-SSH-for-github.md)
 4. [Jenkins + CICD pipeline](<Jenkins - CICD pipeline.md>)
-5. [Terraform Azure](Terraform+aws.md)
-6. [Terraform AWS](Terraform+azure.md)
+5. [Jenkins from scratch](custom-jenkins.md)
+6. [Terraform Azure](Terraform+aws.md)
+7. [Terraform AWS](Terraform+azure.md)
 
